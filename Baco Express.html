@@ -1,0 +1,930 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Bacon Express</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: Amazon-artiger Marktplatz. Dunkle Kopfzeile mit Suche, Hero mit überlappenden Aktionsboxen, Filterleiste links, Produktraster rechts. Währung: Diamanten. Jedes Produkt trägt den lila Verzauberungs-Glint. */
+:root{
+  --bg:#ecebf3;
+  --surface:#ffffff;
+  --fg:#1d1829;
+  --muted:#6a6479;
+  --line:#d9d5e3;
+  --nav:#1b1530;
+  --nav2:#2b2146;
+  --nav-fg:#f4effa;
+  --accent:#c4361f;
+  --accent-soft:#fbe3dc;
+  --cta:#f6b93b;
+  --cta-hover:#e8a722;
+  --cta-fg:#2a1a05;
+  --buy:#ee7a2f;
+  --glint:#9b6bff;
+  --gem:#2fd0e0;
+  --good:#17803d;
+  --star:#f0a21a;
+  --art1:#f1ecfc;
+  --art2:#ddd3f4;
+  --focus:#5b3fd6;
+  --font-body:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-pixel:'Silkscreen','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#110e19;--surface:#1b1627;--fg:#efe9f8;--muted:#a69fb7;--line:#342c47;
+    --nav:#0c0913;--nav2:#1d1630;--accent:#ff6a4a;--accent-soft:#3a1c18;
+    --good:#4ade80;--art1:#2a2042;--art2:#1a1429;--focus:#b79cff;--glint:#b48cff;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#110e19;--surface:#1b1627;--fg:#efe9f8;--muted:#a69fb7;--line:#342c47;
+  --nav:#0c0913;--nav2:#1d1630;--accent:#ff6a4a;--accent-soft:#3a1c18;
+  --good:#4ade80;--art1:#2a2042;--art2:#1a1429;--focus:#b79cff;--glint:#b48cff;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--nav);z-index:60}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.15}
+.wrap{max-width:1320px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.gem{width:.9em;height:.9em;vertical-align:-.1em;flex:none}
+
+/* Kopfzeile */
+.top{background:var(--nav);color:var(--nav-fg);position:sticky;top:env(safe-area-inset-top,0px);z-index:50}
+.top-in{display:flex;align-items:center;gap:14px;padding-block:10px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;flex:none;padding:2px 4px;border-radius:6px}
+.logo-mark{width:46px;display:block}
+.logo-txt{display:flex;flex-direction:column;line-height:1}
+.logo-txt b{font-family:var(--font-pixel);font-weight:700;font-size:23px;letter-spacing:.06em}
+.logo-txt i{font-style:italic;font-weight:800;font-size:15px;color:var(--cta);letter-spacing:.02em;position:relative;padding-bottom:7px}
+.logo-txt i::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;border-radius:0 0 40px 40px;background:repeating-linear-gradient(90deg,#d8472b 0 8px,#f3c8a5 8px 13px)}
+.loc{display:flex;flex-direction:column;line-height:1.15;font-size:13px;flex:none}
+.loc small{color:#b7aed0;font-size:11px}
+.search{display:flex;flex:1 1 320px;min-width:0;border-radius:8px;overflow:hidden;background:#fff}
+.search select{border:0;background:#e9e4f4;color:#2a2340;padding:0 10px;max-width:120px;border-right:1px solid #cfc7e2;font-size:13px}
+.search input{border:0;flex:1;min-width:0;padding:11px 12px;background:#fff;color:#1d1829;font-size:15px}
+.search button{border:0;background:var(--cta);color:var(--cta-fg);width:50px;display:grid;place-items:center}
+.search button:hover{background:var(--cta-hover)}
+.search button svg{width:20px;height:20px}
+.cartbtn{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid transparent;color:var(--nav-fg);padding:6px 10px;border-radius:8px;font-weight:700;flex:none}
+.cartbtn:hover{border-color:#6e5fa0}
+.cartbtn .cnt{background:var(--cta);color:var(--cta-fg);border-radius:99px;min-width:24px;height:24px;display:grid;place-items:center;font-size:13px;padding:0 6px}
+.cartbtn svg{width:28px;height:28px}
+
+.sub{background:var(--nav2);color:var(--nav-fg)}
+.sub-in{display:flex;gap:4px;overflow-x:auto;padding-block:6px;scrollbar-width:thin}
+.sub-in button{background:transparent;border:1px solid transparent;color:inherit;padding:6px 12px;border-radius:6px;white-space:nowrap;font-size:14px}
+.sub-in button:hover,.sub-in button[aria-current="true"]{border-color:#8b7bc0}
+.sub-in .flash{color:var(--cta);font-weight:700}
+
+/* Hero */
+.hero{background:linear-gradient(115deg,var(--nav) 0%,#36216b 52%,#7b2f5b 100%);color:#fff}
+.hero-in{display:grid;grid-template-columns:1.15fr .85fr;gap:24px;align-items:center;padding-block:34px 92px}
+.eyebrow{font-family:var(--font-pixel);font-size:13px;letter-spacing:.12em;color:var(--cta);text-transform:uppercase}
+.hero h1{font-size:clamp(30px,5vw,54px);font-weight:800;margin-top:10px;letter-spacing:-.01em}
+.hero p{max-width:46ch;color:#e0d7f3;margin:14px 0 22px;font-size:17px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid #c4901f;background:linear-gradient(#f9cd6a,var(--cta));color:var(--cta-fg);font-weight:700;padding:9px 18px;border-radius:99px}
+.btn:hover{background:var(--cta-hover)}
+.btn.alt{background:linear-gradient(#f59a5a,var(--buy));border-color:#c4601d;color:#2a1000}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--fg)}
+.btn.ghost:hover{background:var(--art1)}
+.btn.wide{width:100%}
+.btn.hero-btn{padding:12px 24px;font-size:16px}
+.stage{display:flex;justify-content:center;align-items:flex-end;gap:0;min-height:230px;position:relative}
+.stage::before{content:"";position:absolute;inset:8% 6%;background:radial-gradient(closest-side,rgba(155,107,255,.55),transparent);filter:blur(6px)}
+.stage svg{position:relative;display:block}
+.stage .s1{width:min(46%,210px);margin-bottom:0;transform:rotate(-6deg)}
+.stage .s2{width:min(30%,150px);margin-left:-8%;transform:rotate(8deg)}
+.stage .s3{width:min(26%,130px);margin-left:-6%;transform:rotate(-3deg)}
+
+/* Aktionsboxen */
+.promos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:-64px;position:relative;z-index:2}
+.promo{background:var(--surface);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 0 var(--line)}
+.promo h3{font-size:19px;font-weight:700}
+.promo-art{display:flex;gap:10px;align-items:flex-end;background:linear-gradient(135deg,var(--art1),var(--art2));border-radius:4px;padding:12px;min-height:84px}
+.promo-art svg{width:56px}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-weight:600;text-align:left;text-decoration:underline;text-underline-offset:3px}
+.linkbtn:hover{color:var(--fg)}
+
+/* Blitzangebote */
+.deals{background:var(--surface);border-radius:6px;margin-top:20px;padding:16px 16px 12px}
+.sec-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.sec-head h2{font-size:21px;font-weight:700}
+.clock{font-family:var(--font-pixel);background:var(--accent-soft);color:var(--accent);padding:3px 9px;border-radius:4px;font-size:14px;font-variant-numeric:tabular-nums}
+.sec-head small{color:var(--muted)}
+.deal-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x proximity}
+.deal{flex:0 0 176px;scroll-snap-align:start;background:none;border:0;padding:0;text-align:left;display:flex;flex-direction:column;gap:6px}
+.deal .art{aspect-ratio:1;border-radius:4px}
+.deal .tag{align-self:flex-start;background:var(--accent);color:#fff;font-weight:700;font-size:12px;padding:2px 7px;border-radius:3px}
+.deal .nm{font-weight:600;font-size:14px}
+.deal .pr{font-size:13px;color:var(--muted)}
+.deal .pr b{color:var(--fg);font-size:16px}
+
+/* Shop */
+.shop{display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;margin-block:20px 40px;align-items:start}
+.side{background:var(--surface);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:18px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 124px)}
+.side h3{font-size:15px;font-weight:700;margin-bottom:6px}
+.side .opt{display:block;width:100%;text-align:left;background:none;border:0;padding:4px 0;font-size:14px;color:var(--fg)}
+.side .opt:hover{color:var(--accent)}
+.side .opt[aria-pressed="true"]{font-weight:700;color:var(--accent)}
+.side .opt span{color:var(--muted);font-weight:400}
+.side label.chk{display:flex;gap:8px;align-items:center;font-size:14px}
+.side input[type=range]{width:100%;accent-color:var(--accent)}
+.side input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+.range-val{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.results-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--surface);border-radius:6px;padding:10px 14px;margin-bottom:14px}
+.results-bar b{font-weight:700}
+.results-bar select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:14px}
+.card{background:var(--surface);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 0 var(--line)}
+.card:hover{box-shadow:0 4px 18px rgba(40,20,90,.18)}
+.art{display:block;width:100%;border:0;padding:14px;background:linear-gradient(135deg,var(--art1),var(--art2));position:relative}
+.card .art{aspect-ratio:4/3}
+.art svg{display:block;height:100%;max-width:100%;margin-inline:auto}
+.badge{position:absolute;left:0;top:10px;background:var(--accent);color:#fff;font-weight:700;font-size:12px;padding:3px 9px 3px 8px;border-radius:0 3px 3px 0}
+.badge.pick{background:#17803d}
+.card-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card h3{font-size:16px;font-weight:700}
+.card h3 button{background:none;border:0;padding:0;text-align:left;font-weight:700;font-size:inherit}
+.card h3 button:hover{color:var(--accent);text-decoration:underline}
+.fits{font-size:13px;color:var(--muted)}
+.rate{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.stars{display:inline-block;font-size:16px;letter-spacing:1px;line-height:1;background:linear-gradient(90deg,var(--star) var(--r),var(--line) var(--r));-webkit-background-clip:text;background-clip:text;color:transparent}
+.price{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.price b{font-size:24px;font-weight:700;display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.price b .gem{width:.7em;height:.7em}
+.price s{color:var(--muted);font-size:13px}
+.price em{font-style:normal;color:var(--accent);font-weight:700;font-size:13px}
+.deliv{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.prime{display:inline-block;font-weight:800;font-size:11px;letter-spacing:.04em;color:#fff;padding:2px 7px;border-radius:3px;background:repeating-linear-gradient(110deg,#c4361f 0 9px,#a22a17 9px 12px);text-shadow:0 1px 0 rgba(0,0,0,.35)}
+.card .btn{margin-top:auto}
+.empty{background:var(--surface);border-radius:6px;padding:40px 20px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+
+/* Glint */
+.glint{fill:var(--glint);opacity:.1;animation:glint 3.2s ease-in-out infinite}
+@keyframes glint{0%,100%{opacity:.04}50%{opacity:.52}}
+@media (prefers-reduced-motion: reduce){.glint{animation:none;opacity:.22}.drawer,.modal-box{animation:none!important}}
+
+/* Footer */
+.foot{background:var(--nav2);color:#cfc6e6;margin-top:30px}
+.foot-top{background:#3b2f63;color:#fff;text-align:center;padding:12px;font-size:14px;border:0;width:100%}
+.foot-top:hover{background:#4a3c7a}
+.foot-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:24px;padding-block:32px 20px}
+.foot h4{margin:0 0 8px;color:#fff;font-size:15px}
+.foot ul{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:14px}
+.foot-bottom{border-top:1px solid #45386f;padding-block:16px 24px;font-size:12.5px;color:#a79bc7}
+
+/* Warenkorb und Dialog */
+.scrim{position:fixed;inset:0;background:rgba(10,6,20,.62);z-index:70;display:flex;justify-content:flex-end}
+.drawer{width:min(430px,100%);height:100%;background:var(--surface);display:flex;flex-direction:column;animation:slide .22s ease-out;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+@keyframes slide{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+.dr-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dr-head h2{font-size:20px}
+.x{background:none;border:1px solid var(--line);width:34px;height:34px;border-radius:50%;font-size:18px;line-height:1}
+.x:hover{background:var(--art1)}
+.dr-body{flex:1;overflow-y:auto;padding:6px 18px}
+.line{display:grid;grid-template-columns:72px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.line .art{padding:6px;border-radius:4px;aspect-ratio:1}
+.line h4{margin:0;font-size:15px}
+.line .fits{margin-bottom:4px}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.qty button{background:none;border:0;width:30px;height:28px;font-size:16px}
+.qty button:hover{background:var(--art1)}
+.qty span{min-width:26px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.line-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.line-row .linkbtn{font-size:13px}
+.line-pr{margin-left:auto;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.dr-foot{border-top:1px solid var(--line);padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.sum{display:flex;justify-content:space-between;align-items:center}
+.sum.total{font-size:19px;font-weight:700}
+.sum .v{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.ship-bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.ship-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gem),#7be3ad);border-radius:99px;transition:width .3s}
+.ship-note{font-size:13px;color:var(--muted)}
+.track{list-style:none;margin:16px 0;padding:0;display:grid;gap:0}
+.track li{display:grid;grid-template-columns:22px 1fr;gap:12px;padding-bottom:18px;position:relative;color:var(--muted)}
+.track li::before{content:"";position:absolute;left:10px;top:20px;bottom:-2px;width:2px;background:var(--line)}
+.track li:last-child::before{display:none}
+.track .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:12px;z-index:1}
+.track li.on{color:var(--fg);font-weight:600}
+.track li.on .dot{background:var(--gem);border-color:var(--gem);color:#fff}
+.track li.on::before{background:var(--gem)}
+.order-no{font-family:var(--font-pixel);color:var(--accent);font-size:15px}
+
+.modal{position:fixed;inset:0;z-index:80;background:rgba(10,6,20,.66);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal-box{background:var(--surface);border-radius:8px;max-width:860px;width:100%;max-height:100%;overflow-y:auto;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:0;position:relative;animation:slide .2s ease-out}
+.modal-box .art{padding:30px;min-height:300px;height:100%}
+.modal-info{padding:22px 24px 24px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.modal-info h2{font-size:28px;font-weight:800;padding-right:36px}
+.modal-box .x{position:absolute;right:12px;top:12px;background:var(--surface)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:4px 0;font-size:14px;border-top:1px solid var(--line);padding-top:10px}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0}
+.buy-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.buy-row .btn{flex:1 1 150px}
+.stock{color:var(--good);font-weight:700}
+.op-btn{background:var(--cta)!important;color:var(--cta-fg)!important;font-weight:700}
+.op-box{grid-template-columns:minmax(0,1fr)}
+.op-scroll{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.op-tbl{width:100%;border-collapse:collapse;font-size:14px}
+.op-tbl th,.op-tbl td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line)}
+.op-tbl th{position:sticky;top:0;background:var(--surface)}
+.mc-l{font-size:13px;font-weight:600;display:block;margin-top:4px}
+.mc-in{border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:9px 10px;border-radius:6px;width:100%}
+.mc-err{color:var(--accent);font-size:13px}
+.order-text{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);resize:none;margin-top:4px}
+.foot-op{color:#d6c8ff;margin-left:8px}
+.adm h3{font-size:15px;margin:14px 0 4px}
+.adm-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.adm-row .btn{padding:5px 14px;font-size:13px}
+.adm-row span{min-width:0;overflow-wrap:anywhere}
+.opin{width:84px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--nav);color:#fff;padding:10px 18px;border-radius:99px;z-index:90;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);max-width:calc(100% - 32px)}
+
+@media (max-width:900px){
+  .shop{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;flex-direction:row;flex-wrap:wrap;gap:16px 28px}
+  .side>div{min-width:150px;flex:1 1 150px}
+  .hero-in{grid-template-columns:minmax(0,1fr);padding-block:26px 84px}
+  .stage{min-height:150px;max-width:340px;margin-inline:auto}
+}
+@media (max-width:640px){
+  .loc{display:none}
+  .logo-txt b{font-size:19px}
+  .logo-mark{width:38px}
+  .cartbtn{margin-left:auto}
+  .search{order:5;flex-basis:100%}
+  .modal-box{grid-template-columns:minmax(0,1fr)}
+  .modal-box .art{min-height:180px;padding:20px}
+  .modal-box .art svg{max-height:170px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card .art{padding:10px}
+  .card-body{padding:10px}
+  .price b{font-size:20px}
+  .deal{flex-basis:150px}
+}
+@media (max-width:380px){.grid{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<header class="top" id="top">
+  <div class="wrap top-in">
+    <a class="logo" href="#top" aria-label="Bacon Express, nach oben">
+      <span class="logo-mark" id="logoMark"></span>
+      <span class="logo-txt"><b>BACON</b><i>express</i></span>
+    </a>
+    <div class="loc"><small>Lieferung nach</small><b>Overworld · Spawnpunkt</b></div>
+    <form class="search" id="searchForm" role="search">
+      <label class="sr" for="catSel">Kategorie</label>
+      <select id="catSel"></select>
+      <label class="sr" for="q">Suche</label>
+      <input id="q" type="search" placeholder="Verzauberung suchen, z. B. Sharpness oder Bogen" autocomplete="off">
+      <button type="submit" aria-label="Suchen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg>
+      </button>
+    </form>
+    <button class="cartbtn" id="cartBtn" data-act="cart" aria-label="Einkaufswagen öffnen">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h4l3.2 14h14L27 9H8.5"/><circle cx="12" cy="25" r="2"/><circle cx="23" cy="25" r="2"/></svg>
+      <span class="cnt" id="cartCnt">0</span>
+    </button>
+  </div>
+</header>
+<nav class="sub" aria-label="Kategorien"><div class="wrap sub-in" id="subnav"></div></nav>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div>
+        <div class="eyebrow">Blitzlieferung · ca. 20 Minuten</div>
+        <h1>Verzaubert bestellt. Knusprig geliefert.</h1>
+        <p>Über 20 Verzauberungen auf Lager, vom Sharpness-Buch bis zum Mending-Klassiker. Bezahlt wird in Diamanten, geliefert wird per Schwein.</p>
+        <button class="btn hero-btn" data-act="best">Bestseller ansehen</button>
+      </div>
+      <div class="stage" id="stage" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <section class="promos" id="promos" aria-label="Aktionen"></section>
+
+    <section class="deals" aria-labelledby="dealsH">
+      <div class="sec-head">
+        <h2 id="dealsH">Blitzangebote</h2>
+        <span class="clock" id="clock" aria-label="Restzeit">--:--</span>
+        <small>bis der Minecraft-Tag endet (alle 20 Minuten neu)</small>
+      </div>
+      <div class="deal-row" id="deals"></div>
+    </section>
+
+    <section class="shop" id="shop" aria-label="Alle Produkte">
+      <aside class="side" aria-label="Filter">
+        <div>
+          <h3>Kategorie</h3>
+          <div id="catList"></div>
+        </div>
+        <div>
+          <h3>Lieferung</h3>
+          <label class="chk"><input type="checkbox" id="fPrime"><span class="prime">BACON PRIME</span> Lieferung in 20 Min.</label>
+        </div>
+        <div>
+          <h3>Kundenbewertung</h3>
+          <button class="opt" id="rate4" data-act="rate4" aria-pressed="false"><span class="stars" style="--r:80%" aria-hidden="true">★★★★★</span> ab 4 Sternen</button>
+        </div>
+        <div>
+          <h3>Preis bis</h3>
+          <input type="range" id="fPrice" min="3" max="15" step="1" value="15" aria-label="Maximaler Preis in Diamanten">
+          <div class="range-val"><span>3</span><span id="priceVal">15 Diamanten</span></div>
+        </div>
+        <button class="btn ghost" data-act="reset">Filter zurücksetzen</button>
+      </aside>
+      <div>
+        <div class="results-bar">
+          <div id="resultTxt" aria-live="polite"></div>
+          <div>
+            <label for="sortSel" class="sr">Sortieren</label>
+            <select id="sortSel">
+              <option value="rec">Sortieren: Empfohlen</option>
+              <option value="asc">Preis: aufsteigend</option>
+              <option value="desc">Preis: absteigend</option>
+              <option value="rate">Beste Bewertung</option>
+              <option value="rev">Meiste Bewertungen</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid" id="grid"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <button class="foot-top" data-act="top">Zurück nach oben</button>
+  <div class="wrap">
+    <div class="foot-cols">
+      <div><h4>Bacon Express</h4><ul><li>Über uns</li><li>Karriere im Dorf</li><li>Presse</li></ul></div>
+      <div><h4>Verkaufen bei uns</h4><ul><li>Als Bibliothekar anmelden</li><li>Händler-Konto</li><li>Diamanten einlösen</li></ul></div>
+      <div><h4>Hilfe</h4><ul><li>Lieferstatus</li><li>Rückgabe &amp; Entzauberung</li><li>Amboss-Kompatibilität</li></ul></div>
+      <div><h4>Zahlung</h4><ul><li>Diamanten</li><li>Geschenkkarte (Goldbarren)</li><li>Bacon Prime</li></ul></div>
+    </div>
+    <div class="foot-bottom">Bacon Express ist ein Fan-Projekt und ein Spaß-Shop. Es gibt keine echten Bestellungen. Nicht von Mojang Studios oder Microsoft. Minecraft ist eine Marke von Mojang Studios. <button class="linkbtn foot-op" id="opReq" data-act="opreq" hidden>OP-Zugang anfragen</button></div>
+  </div>
+</footer>
+
+<div class="scrim" id="cartScrim" hidden>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="cartH">
+    <div class="dr-head"><h2 id="cartH">Einkaufswagen</h2><button class="x" data-act="close" aria-label="Schließen">×</button></div>
+    <div class="dr-body" id="cartBody"></div>
+    <div class="dr-foot" id="cartFoot"></div>
+  </aside>
+</div>
+<div class="modal" id="modal" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+  'use strict';
+  var $=function(s,r){return (r||document).querySelector(s)};
+
+  /* Pixel-Sprites (eigene Entwürfe, 12 Spalten) */
+  var SP={
+    sword:['.........oo.','........oabo','.......oabo.','......oabo..','.....oabo...','..o.oabo....','..ooabo.....','...ogo......','..ogho......','.oho.o......','oho.........','oo..........'],
+    pick:['...ooooo....','..oabbbbao..','.oabooooabo.','.oao.oho.oao','.oo..oho..oo','.....oho....','......oho...','......oho...','.......oho..','.......oho..','........oho.','........ooo.'],
+    axe:['....ooo.....','...oabbo....','..oabbao.o..','..oaabo.oho.','..ooooooho..','......oho...','.....oho....','.....oho....','....oho.....','....oho.....','...ooo......','............'],
+    helm:['............','..oooooooo..','.oaabbbbaao.','.oabbbbbbao.','.oabbbbbbao.','.oaaaaaaaao.','.oao....oao.','.oao....oao.','.ooo....ooo.','............','............','............'],
+    boots:['............','..ooo.ooo...','..oao.oao...','..oao.oao...','..oao.oao...','.oaao.oaao..','.oaaaoaaaao.','.oooooooooo.','............','............','............','............'],
+    bow:['....oo......','...oao......','..oao.w.....','..oao..w....','.oao...w....','.oao...w....','.oao...w....','..oao..w....','..oao.w.....','...oao......','....oo......','............'],
+    rod:['........ooo.','.......ohho.','......ohho.w','.....ohho..w','....ohho..w.','...ohho...w.','..ohho....w.','.ohho.....w.','ohho......ow','oho.......oo','oo..........','............'],
+    book:['............','.oooooooooo.','.oaaaaaaaao.','.oaabbbbaao.','.oaabggbaao.','.oaabggbaao.','.oaabbbbaao.','.oaaaaaaaao.','.opppppppo..','.ooooooooo..','............','............'],
+    bacon:['..oooooooo..','.orrfffrrro.','orrrrfffrrro','orrfffrrrrro','.orrrfffrro.','..oooooooo..']
+  };
+  var PAL={
+    cyan:['#38b6c8','#b4f0f7'],steel:['#8d9bb3','#dbe3f0'],gold:['#d9a33a','#fbe29a'],
+    green:['#3fae6a','#b6efcf'],wood:['#b07a43','#e6c08f'],teal:['#2d8fb0','#a9e1f3'],
+    violet:['#7d4fd8','#cdb7ff'],dark:['#4a3b66','#9d8bc2']
+  };
+  function sprite(kind,pal,seed){
+    var g=SP[kind],c=PAL[pal]||PAL.violet,rows=g.length;
+    var col={o:'#1a1226',a:c[0],b:c[1],h:'#8a5a2b',g:'#f2c14e',p:'#f3ecd8',w:'#e8e4f0',r:'#c4361f',f:'#f4c9a8'};
+    var base='',gl='';
+    for(var y=0;y<rows;y++){for(var x=0;x<12;x++){
+      var ch=g[y].charAt(x);
+      if(ch==='.'||!col[ch])continue;
+      base+='<rect x="'+x+'" y="'+y+'" width="1.02" height="1.02" fill="'+col[ch]+'"/>';
+      if(ch!=='o')gl+='<rect x="'+x+'" y="'+y+'" width="1.02" height="1.02"/>';
+    }}
+    var delay=((seed||0)*0.37%3.2).toFixed(2);
+    return '<svg viewBox="0 0 12 '+rows+'" shape-rendering="crispEdges" aria-hidden="true">'+base+
+      '<g class="glint" style="animation-delay:-'+delay+'s">'+gl+'</g></svg>';
+  }
+  var GEM='<svg class="gem" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0l6 5-6 7-6-7z" fill="var(--gem)"/><path d="M6 0L3 5l3 7z" fill="#fff" opacity=".3"/><path d="M0 5h12" stroke="#0a5a66" stroke-width=".6" opacity=".5"/></svg>';
+
+  /* Sortiment */
+  var P=[
+    {id:1,name:'Sharpness',de:'Schärfe',lvl:'V',cat:'Waffen',fits:'Schwert, Axt',price:12,old:15,rating:4.8,n:12843,prime:1,hot:1,kind:'sword',pal:'cyan',desc:'Mehr Schaden bei jedem Treffer. Das Standardbuch für alle, die Monster lieber im Nahkampf erledigen.',conf:'andere Schadens-Verzauberungen'},
+    {id:2,name:'Looting',de:'Plünderung',lvl:'III',cat:'Waffen',fits:'Schwert',price:9,rating:4.7,n:5320,prime:1,kind:'sword',pal:'cyan',desc:'Besiegte Monster lassen mehr fallen. Ideal, wenn Ausrüstung und Erfahrung knapp sind.',conf:'keine bekannt'},
+    {id:3,name:'Fire Aspect',de:'Feueraspekt',lvl:'II',cat:'Waffen',fits:'Schwert',price:6,old:8,rating:4.5,n:3188,prime:1,kind:'sword',pal:'cyan',desc:'Setzt Gegner in Brand. Gebratenes Fleisch gibt es als Nebenprodukt gratis dazu.',conf:'keine bekannt'},
+    {id:4,name:'Knockback',de:'Rückstoß',lvl:'II',cat:'Waffen',fits:'Schwert',price:4,rating:4.2,n:1940,prime:0,kind:'sword',pal:'cyan',desc:'Schleudert Gegner einen Schritt weiter weg. Praktisch gegen alles, was explodiert.',conf:'keine bekannt'},
+    {id:5,name:'Efficiency',de:'Effizienz',lvl:'V',cat:'Werkzeuge',fits:'Spitzhacke, Axt, Schaufel',price:13,old:16,rating:4.9,n:18207,prime:1,hot:1,kind:'pick',pal:'gold',desc:'Baut Blöcke in Rekordzeit ab. Wer einmal Stufe V hatte, will nie wieder zurück.',conf:'keine bekannt'},
+    {id:6,name:'Fortune',de:'Glück',lvl:'III',cat:'Werkzeuge',fits:'Spitzhacke',price:11,rating:4.8,n:7612,prime:1,kind:'pick',pal:'gold',desc:'Mehr Erze pro Block. Die schnellste Art, Diamanten zu verdienen, die man hier wieder ausgibt.',conf:'Silk Touch'},
+    {id:7,name:'Silk Touch',de:'Behutsamkeit',lvl:'I',cat:'Werkzeuge',fits:'Spitzhacke, Axt, Schaufel',price:8,rating:4.6,n:4410,prime:1,kind:'axe',pal:'gold',desc:'Blöcke fallen unverändert heraus, auch Glas und Gestein. Perfekt für Sammler und Baumeister.',conf:'Fortune'},
+    {id:8,name:'Unbreaking',de:'Haltbarkeit',lvl:'III',cat:'Universal',fits:'Fast alle Werkzeuge und Rüstungen',price:5,rating:4.7,n:9031,prime:1,kind:'book',pal:'violet',desc:'Dein Gegenstand hält deutlich länger durch, bevor er zerbricht.',conf:'keine bekannt'},
+    {id:9,name:'Mending',de:'Reparatur',lvl:'I',cat:'Universal',fits:'Fast alle Werkzeuge und Rüstungen',price:14,old:17,rating:4.9,n:22764,prime:1,hot:1,kind:'book',pal:'violet',desc:'Gesammelte Erfahrungspunkte reparieren den Gegenstand. Das meistgekaufte Buch im ganzen Sortiment.',conf:'Infinity'},
+    {id:10,name:'Protection',de:'Schutz',lvl:'IV',cat:'Rüstung',fits:'Helm, Brustplatte, Hose, Stiefel',price:10,rating:4.7,n:8650,prime:1,kind:'helm',pal:'steel',desc:'Weniger Schaden aus fast allen Quellen. Sicher ist sicher.',conf:'andere Schutz-Verzauberungen'},
+    {id:11,name:'Thorns',de:'Dornen',lvl:'III',cat:'Rüstung',fits:'Brustplatte, Helm',price:7,rating:4.1,n:2205,prime:0,kind:'helm',pal:'steel',desc:'Wer dich schlägt, nimmt selbst Schaden. Kostet allerdings Haltbarkeit.',conf:'keine bekannt'},
+    {id:12,name:'Feather Falling',de:'Federfall',lvl:'IV',cat:'Rüstung',fits:'Stiefel',price:6,old:8,rating:4.6,n:6120,prime:1,kind:'boots',pal:'steel',desc:'Sturzschaden wird stark reduziert. Der Klassiker für Klippen, Höhlen und mutige Brückenbauer.',conf:'keine bekannt'},
+    {id:13,name:'Respiration',de:'Atmung',lvl:'III',cat:'Rüstung',fits:'Helm',price:6,rating:4.4,n:2874,prime:0,kind:'helm',pal:'teal',desc:'Du hältst unter Wasser viel länger die Luft an und siehst dort besser.',conf:'keine bekannt'},
+    {id:14,name:'Depth Strider',de:'Tiefenläufer',lvl:'III',cat:'Rüstung',fits:'Stiefel',price:8,rating:4.5,n:3902,prime:1,kind:'boots',pal:'teal',desc:'Du läufst im Wasser fast so schnell wie an Land.',conf:'Frost Walker'},
+    {id:15,name:'Power',de:'Stärke',lvl:'V',cat:'Bögen',fits:'Bogen',price:12,old:15,rating:4.8,n:6788,prime:1,kind:'bow',pal:'wood',desc:'Pfeile treffen deutlich härter. Gut für Skelettjäger und alle, die Abstand mögen.',conf:'keine bekannt'},
+    {id:16,name:'Infinity',de:'Unendlichkeit',lvl:'I',cat:'Bögen',fits:'Bogen',price:15,rating:4.9,n:11250,prime:1,pick:1,kind:'bow',pal:'wood',desc:'Ein einziger Pfeil im Inventar reicht für immer. Spart Platz und Nerven.',conf:'Mending'},
+    {id:17,name:'Flame',de:'Flamme',lvl:'I',cat:'Bögen',fits:'Bogen',price:6,rating:4.3,n:2140,prime:0,kind:'bow',pal:'wood',desc:'Pfeile setzen das Ziel in Brand. Nicht in der Nähe von Heuballen verwenden.',conf:'keine bekannt'},
+    {id:18,name:'Luck of the Sea',de:'Glück des Meeres',lvl:'III',cat:'Angeln',fits:'Angel',price:9,old:11,rating:4.7,n:4975,prime:1,kind:'rod',pal:'teal',desc:'Mehr Schätze, weniger Müll am Haken. Dein Teich wird zur Schatzkammer.',conf:'keine bekannt'},
+    {id:19,name:'Lure',de:'Köder',lvl:'III',cat:'Angeln',fits:'Angel',price:8,rating:4.6,n:3566,prime:1,kind:'rod',pal:'teal',desc:'Fische beißen schneller an. Mehr Zeit für den Rest des Tages.',conf:'keine bekannt'},
+    {id:20,name:'Curse of Binding',de:'Fluch der Bindung',lvl:'I',cat:'Flüche',fits:'Rüstung',price:3,rating:1.4,n:312,prime:0,kind:'book',pal:'dark',desc:'Der Gegenstand lässt sich nicht mehr ausziehen. Rückgabe ausgeschlossen, aus Prinzip.',conf:'keine bekannt'},
+    {id:21,name:'Curse of Vanishing',de:'Fluch des Verschwindens',lvl:'I',cat:'Flüche',fits:'Fast alle Gegenstände',price:3,rating:1.8,n:204,prime:0,kind:'book',pal:'dark',desc:'Der Gegenstand verschwindet, sobald du stirbst. Auch dieses Buch wird dir irgendwann fehlen.',conf:'keine bekannt'}
+  ];
+  var CATS=['Alle','Waffen','Werkzeuge','Rüstung','Bögen','Angeln','Universal','Flüche'];
+  var byId={};P.forEach(function(p){byId[p.id]=p;p.p0=p.price;p.o0=p.old||null});
+  var isOP=false;
+
+  var F={q:'',cat:'Alle',prime:false,rate4:false,max:15,sort:'rec'};
+  var cart={};
+  try{var raw=localStorage.getItem('bacon-express-cart');if(raw){var o=JSON.parse(raw);Object.keys(o).forEach(function(k){if(byId[k]&&o[k]>0)cart[k]=Math.min(99,o[k]|0)})}}catch(e){}
+  function save(){try{localStorage.setItem('bacon-express-cart',JSON.stringify(cart))}catch(e){}}
+
+  function fmt(n){return n.toLocaleString('de-DE')}
+  function stars(r){return '<span class="stars" style="--r:'+(r/5*100).toFixed(0)+'%" role="img" aria-label="'+String(r).replace('.',',')+' von 5 Sternen">★★★★★</span>'}
+  function priceHtml(p){
+    var h='<div class="price"><b>'+GEM+fmt(p.price)+'</b>';
+    if(p.old){h+='<s>'+fmt(p.old)+'</s><em>−'+Math.round((1-p.price/p.old)*100)+'%</em>'}
+    return h+'</div>';
+  }
+  function delivHtml(p){
+    return p.prime?'<div class="deliv"><span class="prime">BACON PRIME</span> Lieferung in 20 Minuten</div>'
+      :'<div class="deliv">Lieferung in 3 Minecraft-Tagen (ca. 1 Std.)</div>';
+  }
+  function badge(p){return p.hot?'<span class="badge">Bestseller</span>':(p.pick?'<span class="badge pick">Speck-Tipp</span>':'')}
+
+  /* Rendering */
+  function renderStatic(){
+    $('#logoMark').innerHTML=sprite('bacon','steel',0);
+    var st=$('#stage');st.innerHTML='';
+    [['book','violet','s1',1],['sword','cyan','s2',3],['pick','gold','s3',5]].forEach(function(a){
+      var d=document.createElement('div');d.className=a[2];d.innerHTML=sprite(a[0],a[1],a[3]);st.appendChild(d);
+    });
+    $('#catSel').innerHTML=CATS.map(function(c){return '<option value="'+c+'">'+(c==='Alle'?'Alle Kategorien':c)+'</option>'}).join('');
+    var promos=[
+      {t:'Nie wieder kaputt',cat:'Universal',a:['book','violet'],b:['book','violet'],l:'Mending &amp; Unbreaking'},
+      {t:'Für Nahkämpfer',cat:'Waffen',a:['sword','cyan'],b:['axe','cyan'],l:'Alle Waffen-Bücher'},
+      {t:'Schneller abbauen',cat:'Werkzeuge',a:['pick','gold'],b:['axe','gold'],l:'Alle Werkzeug-Bücher'},
+      {t:'Die Fluch-Ecke',cat:'Flüche',a:['book','dark'],b:['book','dark'],l:'Nur für Mutige'}
+    ];
+    $('#promos').innerHTML=promos.map(function(p,i){
+      return '<article class="promo"><h3>'+p.t+'</h3><div class="promo-art">'+sprite(p.a[0],p.a[1],i+2)+sprite(p.b[0],p.b[1],i+6)+'</div><button class="linkbtn" data-act="cat" data-cat="'+p.cat+'">'+p.l+'</button></article>';
+    }).join('');
+    renderDeals();
+  }
+  function renderDeals(){
+    $('#deals').innerHTML=P.filter(function(p){return p.old}).map(function(p){
+      return '<button class="deal" data-act="open" data-id="'+p.id+'"><span class="art">'+sprite(p.kind,p.pal,p.id)+'</span><span class="tag">−'+Math.round((1-p.price/p.old)*100)+'%</span><span class="nm">'+p.name+' '+p.lvl+'</span><span class="pr"><b>'+fmt(p.price)+'</b> Diamanten <s>'+fmt(p.old)+'</s></span></button>';
+    }).join('');
+  }
+  function renderNav(){
+    $('#subnav').innerHTML='<button class="flash" data-act="best">Blitzangebote</button>'+(isOP?'<button class="op-btn" data-act="op">OP-Panel'+(isOwner&&newOrders?' ('+newOrders+')':'')+'</button>':'')+CATS.map(function(c){
+      return '<button data-act="cat" data-cat="'+c+'" aria-current="'+(F.cat===c)+'">'+(c==='Alle'?'Alle Verzauberungen':c)+'</button>';
+    }).join('');
+    $('#catList').innerHTML=CATS.map(function(c){
+      var n=P.filter(function(p){return c==='Alle'||p.cat===c}).length;
+      return '<button class="opt" data-act="cat" data-cat="'+c+'" aria-pressed="'+(F.cat===c)+'">'+c+' <span>('+n+')</span></button>';
+    }).join('');
+    $('#catSel').value=F.cat;
+    $('#rate4').setAttribute('aria-pressed',String(F.rate4));
+  }
+  function filtered(){
+    var q=F.q.trim().toLowerCase();
+    var r=P.filter(function(p){
+      if(F.cat!=='Alle'&&p.cat!==F.cat)return false;
+      if(F.prime&&!p.prime)return false;
+      if(F.rate4&&p.rating<4)return false;
+      if(p.price>F.max)return false;
+      if(q){var hay=(p.name+' '+p.de+' '+p.lvl+' '+p.cat+' '+p.fits+' '+p.desc).toLowerCase();if(hay.indexOf(q)<0)return false}
+      return true;
+    });
+    if(F.sort==='asc')r.sort(function(a,b){return a.price-b.price});
+    else if(F.sort==='desc')r.sort(function(a,b){return b.price-a.price});
+    else if(F.sort==='rate')r.sort(function(a,b){return b.rating-a.rating||b.n-a.n});
+    else if(F.sort==='rev')r.sort(function(a,b){return b.n-a.n});
+    return r;
+  }
+  function renderGrid(){
+    var r=filtered();
+    $('#resultTxt').innerHTML=r.length?'<b>'+r.length+'</b> '+(r.length===1?'Ergebnis':'Ergebnisse')+(F.cat!=='Alle'?' in „'+F.cat+'“':'')+(F.q.trim()?' für „'+F.q.trim().replace(/[<>&"]/g,'')+'“':''):'Keine Ergebnisse';
+    $('#priceVal').textContent=F.max+' Diamanten';
+    if(!r.length){
+      $('#grid').innerHTML='<div class="empty" style="grid-column:1/-1"><h3>Dafür haben wir kein Buch im Regal</h3><p>Prüfe die Schreibweise oder lockere die Filter.</p><button class="btn" data-act="reset">Filter zurücksetzen</button></div>';
+      return;
+    }
+    $('#grid').innerHTML=r.map(function(p){
+      return '<article class="card"><button class="art" data-act="open" data-id="'+p.id+'" aria-label="'+p.name+' '+p.lvl+' ansehen">'+badge(p)+sprite(p.kind,p.pal,p.id)+'</button>'+
+        '<div class="card-body"><h3><button data-act="open" data-id="'+p.id+'">'+p.name+' '+p.lvl+'</button></h3>'+
+        '<div class="fits">Passt auf: '+p.fits+'</div>'+
+        '<div class="rate">'+stars(p.rating)+'<span>'+String(p.rating).replace('.',',')+' · '+fmt(p.n)+'</span></div>'+
+        priceHtml(p)+delivHtml(p)+
+        '<button class="btn" data-act="add" data-id="'+p.id+'">In den Einkaufswagen</button></div></article>';
+    }).join('');
+  }
+
+  /* Warenkorb */
+  var view='cart',order=null,orderTimer=null;
+  var mcName='';
+  try{mcName=(localStorage.getItem('bacon-express-mc')||'').replace(/[^A-Za-z0-9_]/g,'').slice(0,16)}catch(e){}
+  function saveMc(){try{localStorage.setItem('bacon-express-mc',mcName)}catch(e){}}
+  var STEPS=['Bestellung eingegangen','Schwein wird gesattelt','Unterwegs durch den Overworld','Zugestellt'];
+  function count(){return Object.keys(cart).reduce(function(s,k){return s+cart[k]},0)}
+  function total(){return Object.keys(cart).reduce(function(s,k){return s+cart[k]*byId[k].price},0)}
+  function renderCart(){
+    $('#cartCnt').textContent=count();
+    var body=$('#cartBody'),foot=$('#cartFoot');
+    if(view==='cart'&&document.activeElement&&document.activeElement.id==='mcName'&&Object.keys(cart).length)return;
+    if(view==='done'&&order){
+      if(body.getAttribute('data-no')!==order.no){
+        body.innerHTML='<div style="padding-top:14px"><div class="order-no">Bestellung '+order.no+'</div><h3 style="margin-top:8px;font-size:20px">Danke für deine Bestellung</h3>'+
+          '<p class="ship-note">'+order.items+' Artikel für '+fmt(order.sum)+' Diamanten, geliefert an '+order.mc+'.</p>'+
+          '<p class="ship-note" id="saveMsg" role="status"></p>'+
+          '<label class="mc-l" for="orderText">Bestelltext</label><textarea class="order-text" id="orderText" rows="5" readonly></textarea>'+
+          '<div class="buy-row"><button class="btn ghost" data-act="copyorder">Bestelltext kopieren</button></div>'+
+          '<ol class="track" id="trk" aria-live="polite"></ol><div id="delivMsg"></div></div>';
+        $('#orderText').value=order.text;
+        body.setAttribute('data-no',order.no);
+      }
+      $('#saveMsg').textContent=order.saved==='yes'?'Der Shop wurde benachrichtigt und liefert an deinen Minecraft-Namen.':
+        (order.saved==='no'?'Der Shop konnte nicht automatisch benachrichtigt werden. Kopiere den Bestelltext und schick ihn an den Shop.':'Sende Bestellung …');
+      $('#trk').innerHTML=STEPS.map(function(s,i){return '<li class="'+(i<=order.step?'on':'')+'"><span class="dot">'+(i<=order.step?'✓':'')+'</span><span>'+s+'</span></li>'}).join('');
+      $('#delivMsg').innerHTML=order.step>=3?'<p><b>Zugestellt.</b> Viel Spaß am Amboss.</p>':'';
+      foot.innerHTML='<button class="btn wide" data-act="close">Weiter einkaufen</button>';
+      return;
+    }
+    body.removeAttribute('data-no');
+    var ids=Object.keys(cart);
+    if(!ids.length){
+      body.innerHTML='<div class="empty" style="margin-top:30px;background:none"><h3>Dein Einkaufswagen ist leer</h3><p class="ship-note">Fülle ihn mit Verzauberungen.</p></div>';
+      foot.innerHTML='<button class="btn wide" data-act="close">Weiter stöbern</button>';
+      return;
+    }
+    body.innerHTML=ids.map(function(k){
+      var p=byId[k];
+      return '<div class="line"><div class="art">'+sprite(p.kind,p.pal,p.id)+'</div><div><h4>'+p.name+' '+p.lvl+'</h4><div class="fits">'+p.fits+'</div>'+
+        '<div class="line-row"><span class="qty"><button data-act="dec" data-id="'+p.id+'" aria-label="Weniger">−</button><span>'+cart[k]+'</span><button data-act="inc" data-id="'+p.id+'" aria-label="Mehr">+</button></span>'+
+        '<button class="linkbtn" data-act="rm" data-id="'+p.id+'">Entfernen</button><span class="line-pr">'+GEM+fmt(p.price*cart[k])+'</span></div></div></div>';
+    }).join('');
+    var sum=total(),ship=sum>=25?0:2,left=Math.max(0,25-sum);
+    foot.innerHTML='<div class="ship-bar" aria-hidden="true"><i style="width:'+Math.min(100,sum/25*100)+'%"></i></div>'+
+      '<div class="ship-note">'+(left?'Noch '+left+' Diamanten bis zum Gratis-Versand.':'Du hast Gratis-Versand.')+'</div>'+
+      '<div class="sum"><span>Zwischensumme</span><span class="v">'+GEM+fmt(sum)+'</span></div>'+
+      '<div class="sum"><span>Versand</span><span class="v">'+(ship?GEM+ship:'Gratis')+'</span></div>'+
+      '<div class="sum total"><span>Gesamt</span><span class="v">'+GEM+fmt(sum+ship)+'</span></div>'+
+      '<label class="mc-l" for="mcName">Dein Minecraft-Name</label><input class="mc-in" id="mcName" maxlength="16" autocomplete="off" spellcheck="false" placeholder="z. B. Creeper_Fan" value="'+mcName+'"><div class="mc-err" id="mcErr" role="alert"></div>'+
+      '<button class="btn alt wide" data-act="checkout">Jetzt bezahlen</button>';
+  }
+  var toastT;
+  function toast(t){var el=$('#toast');el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){el.hidden=true},2000)}
+  function add(id,n){cart[id]=Math.min(99,(cart[id]||0)+(n||1));save();renderCart()}
+  function openCart(){if(view==='done'&&order&&order.step>=3){view='cart';order=null}$('#cartScrim').hidden=false;renderCart();var b=$('#cartScrim .x');if(b)b.focus()}
+  function closeAll(){$('#cartScrim').hidden=true;$('#modal').hidden=true;if(view==='done'&&order&&order.step>=3){view='cart';order=null;renderCart()}}
+  function checkout(){
+    var err=$('#mcErr');
+    if(!/^[A-Za-z0-9_]{3,16}$/.test(mcName)){
+      if(err)err.textContent='Gib deinen Minecraft-Namen ein (3 bis 16 Zeichen: Buchstaben, Zahlen und _).';
+      var mi=$('#mcName');if(mi)mi.focus();
+      return;
+    }
+    var base=total(),ship=base>=25?0:2,sum=base+ship,lines=[],txt=[];
+    Object.keys(cart).forEach(function(k){var p=byId[k];lines.push([p.id,cart[k],p.price]);txt.push(cart[k]+'x '+p.name+' '+p.lvl+' ('+p.price+' Diamanten)')});
+    var no='#BE-'+(10000+Math.floor(Math.random()*89999));
+    order={no:no,t:Date.now(),mc:mcName,step:0,items:count(),sum:sum,lines:lines,saved:'pending',
+      text:'Bacon Express Bestellung '+no+'\nMinecraft-Name: '+mcName+'\n'+txt.join('\n')+'\nGesamt: '+sum+' Diamanten'+(ship?' (inkl. '+ship+' Versand)':'')};
+    var o=order;
+    cart={};save();view='done';renderCart();
+    saveOrder(o);
+    clearInterval(orderTimer);
+    orderTimer=setInterval(function(){
+      if(!order){clearInterval(orderTimer);return}
+      order.step++;
+      if(order.step>=3)clearInterval(orderTimer);
+      renderCart();
+    },2200);
+  }
+
+  /* Produktansicht */
+  function openModal(id){
+    var p=byId[id];if(!p)return;
+    var m=$('#modal');
+    m.innerHTML='<div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mTitle"><button class="x" data-act="close" aria-label="Schließen">×</button>'+
+      '<div class="art">'+badge(p)+sprite(p.kind,p.pal,p.id)+'</div>'+
+      '<div class="modal-info"><div class="fits">Verzauberung · '+p.cat+'</div><h2 id="mTitle">'+p.name+' '+p.lvl+'</h2>'+
+      '<div class="rate">'+stars(p.rating)+'<span>'+String(p.rating).replace('.',',')+' · '+fmt(p.n)+' Bewertungen</span></div>'+
+      priceHtml(p)+delivHtml(p)+'<p style="margin:4px 0">'+p.desc+'</p>'+
+      '<dl class="facts"><dt>Stufe</dt><dd>'+p.lvl+' (Maximalstufe)</dd><dt>Passt auf</dt><dd>'+p.fits+'</dd><dt>Nicht kombinierbar mit</dt><dd>'+p.conf+'</dd><dt>Verfügbarkeit</dt><dd class="stock">Auf Lager</dd></dl>'+
+      '<div class="buy-row"><button class="btn" data-act="add" data-id="'+p.id+'">In den Einkaufswagen</button><button class="btn alt" data-act="buynow" data-id="'+p.id+'">Jetzt kaufen</button></div></div></div>';
+    m.hidden=false;
+    var x=$('.x',m);if(x)x.focus();
+  }
+
+  function setCat(c){F.cat=c;renderNav();renderGrid()}
+  function resetF(){F={q:'',cat:'Alle',prime:false,rate4:false,max:+$('#fPrice').max,sort:'rec'};$('#q').value='';$('#fPrime').checked=false;$('#fPrice').value=F.max;$('#sortSel').value='rec';renderNav();renderGrid()}
+  function toShop(){var s=$('#shop');if(s)s.scrollIntoView({behavior:'smooth',block:'start'})}
+
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    if(t.id==='cartScrim'||t.id==='modal'){closeAll();return}
+    var el=t.closest('[data-act]');if(!el)return;
+    var a=el.getAttribute('data-act'),id=el.getAttribute('data-id');
+    if(a==='add'){add(id);toast(byId[id].name+' '+byId[id].lvl+' liegt im Einkaufswagen')}
+    else if(a==='buynow'){add(id);$('#modal').hidden=true;openCart()}
+    else if(a==='open')openModal(id);
+    else if(a==='cart')openCart();
+    else if(a==='close')closeAll();
+    else if(a==='cat'){setCat(el.getAttribute('data-cat'));toShop()}
+    else if(a==='best'){F.sort='rate';F.cat='Alle';$('#sortSel').value='rate';renderNav();renderGrid();toShop()}
+    else if(a==='rate4'){F.rate4=!F.rate4;renderNav();renderGrid()}
+    else if(a==='reset')resetF();
+    else if(a==='inc'){add(id)}
+    else if(a==='dec'){cart[id]=(cart[id]||1)-1;if(cart[id]<=0)delete cart[id];save();renderCart()}
+    else if(a==='rm'){delete cart[id];save();renderCart()}
+    else if(a==='checkout')checkout();
+    else if(a==='top')window.scrollTo({top:0,behavior:'smooth'});
+    else if(a==='op')openOp();
+    else if(a==='opsave')opSave();
+    else if(a==='opreq')opRequest();
+    else if(a==='opsend')opSend();
+    else if(a==='copyorder'){var ta=$('#orderText');if(ta){ta.select();try{navigator.clipboard.writeText(ta.value).then(function(){toast('Bestelltext kopiert')},function(){toast('Text markiert. Kopiere mit Strg+C.')})}catch(er){toast('Text markiert. Kopiere mit Strg+C.')}}}
+    else if(a==='opok')opAccept(id);
+    else if(a==='opno')opDecline(id);
+    else if(a==='opdel')opRemove(id);
+    else if(a==='opreset'){var q=byId[id];$('#opp-'+id).value=q.p0;$('#opo-'+id).value=q.o0||''}
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&(!$('#cartScrim').hidden||!$('#modal').hidden))closeAll()});
+  document.addEventListener('input',function(e){
+    var t=e.target;if(!t||(t.id!=='mcName'&&t.id!=='rqName'))return;
+    var v=t.value.replace(/[^A-Za-z0-9_]/g,'');if(v!==t.value)t.value=v;
+    mcName=v;saveMc();
+    var er=$(t.id==='mcName'?'#mcErr':'#rqErr');if(er)er.textContent='';
+  });
+  $('#searchForm').addEventListener('submit',function(e){e.preventDefault();F.q=$('#q').value;F.cat=$('#catSel').value;renderNav();renderGrid();toShop()});
+  $('#q').addEventListener('input',function(){F.q=this.value;renderGrid()});
+  $('#catSel').addEventListener('change',function(){setCat(this.value)});
+  $('#fPrime').addEventListener('change',function(){F.prime=this.checked;renderGrid()});
+  $('#fPrice').addEventListener('input',function(){F.max=+this.value;renderGrid()});
+  $('#sortSel').addEventListener('change',function(){F.sort=this.value;renderGrid()});
+
+
+  /* Gemeinsame Preise (db). OPs stehen in einer Liste, die nur der Besitzer ändert.
+     Jede OP schreibt nur in ihr eigenes Dokument, die Seite übernimmt nur Einträge von Personen auf der Liste. */
+  var myId=null,isOwner=false,opIds=[],opNames={},priceDocs=[],reqDocs=[],userNs=null,dbNs=null,ensuring=false,reqSent=false;
+  var allOrders=[],seenKeys=null,newOrders=0,lastSeen=0,baseTitle=document.title;
+  try{lastSeen=Number(localStorage.getItem('bacon-express-seen'))||0}catch(e){}
+  function recompute(){
+    P.forEach(function(p){
+      var best=null;
+      priceDocs.forEach(function(d){
+        if(opIds.indexOf(d.id)<0)return;
+        var e=d.items&&d.items[p.id];
+        if(e&&typeof e.t==='number'&&(!best||e.t>best.t))best=e;
+      });
+      p.price=p.p0;p.old=p.o0||undefined;
+      if(best&&!best.reset&&typeof best.price==='number'&&best.price>=1){
+        p.price=Math.round(best.price);
+        p.old=(typeof best.old==='number'&&best.old>p.price)?Math.round(best.old):undefined;
+      }
+    });
+    var top=Math.max.apply(null,P.map(function(p){return p.price}).concat([15]));
+    var sl=$('#fPrice'),wasMax=F.max>=(+sl.max);
+    sl.max=top;if(wasMax)F.max=top;sl.value=F.max;
+    renderDeals();renderGrid();renderCart();
+  }
+  function updateRole(){
+    isOP=!!dbNs&&!!myId&&(isOwner||opIds.indexOf(myId)>=0);
+    renderNav();
+    $('#opReq').hidden=!(dbNs&&myId&&!isOP&&!reqSent);
+    if(!isOP&&$('#opT')&&!$('#modal').hidden)$('#modal').hidden=true;
+  }
+  function writeOps(ids,names){
+    var nm={};ids.forEach(function(i){if(names[i])nm[i]=names[i]});
+    return dbNs.doc('ops/list').set({ids:ids,names:nm});
+  }
+  async function ensureOwner(){
+    if(!isOwner||!myId||ensuring||opIds.indexOf(myId)>=0)return;
+    ensuring=true;
+    try{await writeOps(opIds.concat([myId]),opNames)}catch(e){}
+    ensuring=false;
+  }
+  function opRows(){
+    return P.map(function(p){
+      return '<tr><td>'+p.name+' '+p.lvl+'</td>'+
+        '<td><input class="opin" id="opp-'+p.id+'" type="number" min="1" max="99" step="1" value="'+p.price+'" aria-label="Preis '+p.name+'"></td>'+
+        '<td><input class="opin" id="opo-'+p.id+'" type="number" min="1" max="999" step="1" value="'+(p.old||'')+'" placeholder="–" aria-label="Streichpreis '+p.name+'"></td>'+
+        '<td><button class="linkbtn" data-act="opreset" data-id="'+p.id+'">Standard</button></td></tr>';
+    }).join('');
+  }
+  function openOp(){
+    if(!isOP)return;
+    var m=$('#modal');
+    m.innerHTML='<div class="modal-box op-box" role="dialog" aria-modal="true" aria-labelledby="opT"><button class="x" data-act="close" aria-label="Schließen">×</button>'+
+      '<div class="modal-info"><h2 id="opT">OP-Panel</h2><p class="ship-note">Preise in Diamanten. Ein leeres Streichpreis-Feld heißt: kein Angebot. Gespeichert wird für alle, die den Shop geöffnet haben.</p>'+
+      '<div class="op-scroll"><table class="op-tbl"><thead><tr><th>Verzauberung</th><th>Preis</th><th>Streichpreis</th><th></th></tr></thead><tbody>'+opRows()+'</tbody></table></div>'+
+      '<div class="buy-row"><button class="btn" data-act="opsave">Alle Änderungen speichern</button></div><div class="ship-note" id="opMsg" role="status"></div>'+
+      (isOwner?'<div class="adm" id="opOrders"></div><div class="adm" id="opAdmin"></div>':'')+'</div></div>';
+    m.hidden=false;
+    var x=$('.x',m);if(x)x.focus();
+    renderOrders();markSeen();renderOpAdmin();
+  }
+  function adminRow(label,btns){
+    var r=document.createElement('div');r.className='adm-row';
+    var sp=document.createElement('span');sp.textContent=label;r.appendChild(sp);
+    var w=document.createElement('span');
+    btns.forEach(function(b){
+      var el=document.createElement('button');el.className='btn ghost';el.textContent=b[0];
+      el.setAttribute('data-act',b[1]);el.setAttribute('data-id',b[2]);w.appendChild(el);w.appendChild(document.createTextNode(' '));
+    });
+    r.appendChild(w);return r;
+  }
+  async function renderOpAdmin(){
+    if(!isOwner||!$('#opAdmin'))return;
+    var reqs=reqDocs.map(function(d){return d.id}).filter(function(i){return opIds.indexOf(i)<0});
+    var ops=opIds.filter(function(i){return i!==myId});
+    var ps={};
+    if(userNs&&(reqs.length||ops.length)){try{ps=await userNs.profiles(reqs.concat(ops))}catch(e){}}
+    var box=$('#opAdmin');if(!box)return;
+    function mcOf(i){var r=reqDocs.filter(function(d){return d.id===i})[0];return (r&&r.mc)||opNames[i]||''}
+    function nm(i){return ((ps[i]&&ps[i].name)||'Person ohne sichtbaren Namen')+(mcOf(i)?' · Minecraft: '+mcOf(i):'')}
+    box.textContent='';
+    var h1=document.createElement('h3');h1.textContent='OP-Anfragen';box.appendChild(h1);
+    if(!reqs.length){var e1=document.createElement('p');e1.className='ship-note';e1.textContent='Keine offenen Anfragen.';box.appendChild(e1)}
+    reqs.forEach(function(i){box.appendChild(adminRow(nm(i),[['Annehmen','opok',i],['Ablehnen','opno',i]]))});
+    var h2=document.createElement('h3');h2.textContent='Aktuelle OPs';box.appendChild(h2);
+    if(!ops.length){var e2=document.createElement('p');e2.className='ship-note';e2.textContent='Außer dir gibt es noch keine OPs.';box.appendChild(e2)}
+    ops.forEach(function(i){box.appendChild(adminRow(nm(i),[['Entfernen','opdel',i]]))});
+  }
+  function opRequest(){
+    if(!dbNs||!myId)return;
+    var m=$('#modal');
+    m.innerHTML='<div class="modal-box op-box" role="dialog" aria-modal="true" aria-labelledby="rqT"><button class="x" data-act="close" aria-label="Schließen">×</button>'+
+      '<div class="modal-info"><h2 id="rqT">OP-Zugang anfragen</h2><p class="ship-note">Der Besitzer sieht deine Anfrage mit deinem Minecraft-Namen und entscheidet.</p>'+
+      '<label class="mc-l" for="rqName">Dein Minecraft-Name</label><input class="mc-in" id="rqName" maxlength="16" autocomplete="off" spellcheck="false" value="'+mcName+'"><div class="mc-err" id="rqErr" role="alert"></div>'+
+      '<div class="buy-row"><button class="btn" data-act="opsend">Anfrage senden</button></div></div></div>';
+    m.hidden=false;$('#rqName').focus();
+  }
+  async function opSend(){
+    var inp=$('#rqName'),er=$('#rqErr');if(!inp||!dbNs||!myId)return;
+    var v=inp.value.trim();
+    if(!/^[A-Za-z0-9_]{3,16}$/.test(v)){er.textContent='Gib deinen Minecraft-Namen ein (3 bis 16 Zeichen: Buchstaben, Zahlen und _).';return}
+    mcName=v;saveMc();
+    try{await dbNs.doc('opreq/'+myId).set({t:Date.now(),mc:v});reqSent=true;$('#opReq').hidden=true;$('#modal').hidden=true;toast('Anfrage gesendet. Der Besitzer muss sie bestätigen.')}
+    catch(e){er.textContent='Anfrage nicht möglich. Dafür braucht dein Konto Mitwirken-Zugriff.'}
+  }
+  async function opAccept(id){
+    if(!isOwner||!dbNs)return;
+    try{
+      var r=reqDocs.filter(function(d){return d.id===id})[0],nn={};
+      Object.keys(opNames).forEach(function(k){nn[k]=opNames[k]});
+      if(r&&r.mc)nn[id]=r.mc;
+      if(opIds.indexOf(id)<0)await writeOps(opIds.concat([id]),nn);
+      await dbNs.doc('opreq/'+id).delete();
+    }catch(e){toast('Das hat nicht geklappt.')}
+  }
+  async function opDecline(id){
+    if(!isOwner||!dbNs)return;
+    try{await dbNs.doc('opreq/'+id).delete()}catch(e){toast('Das hat nicht geklappt.')}
+  }
+  async function opRemove(id){
+    if(!isOwner||!dbNs)return;
+    try{await writeOps(opIds.filter(function(x){return x!==id}),opNames)}catch(e){toast('Das hat nicht geklappt.')}
+  }
+  async function saveOrder(o){
+    if(!dbNs||!myId){o.saved='no';if(order===o)renderCart();return}
+    try{
+      var ref=dbNs.doc('orders/'+myId),snap=await ref.get(),list=[];
+      if(snap.exists){var v=snap.data();if(v&&Array.isArray(v.list))list=v.list.slice()}
+      list.push({no:o.no,t:o.t,mc:o.mc,lines:o.lines,sum:o.sum});
+      if(list.length>30)list=list.slice(-30);
+      await ref.set({list:list});
+      o.saved='yes';
+    }catch(e){o.saved='no'}
+    if(order===o)renderCart();
+  }
+  function beep(){
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext,c=new AC(),osc=c.createOscillator(),g=c.createGain();
+      osc.type='square';osc.frequency.value=880;g.gain.value=.05;osc.connect(g);g.connect(c.destination);
+      osc.start();setTimeout(function(){osc.frequency.value=1175},120);osc.stop(c.currentTime+.3);
+    }catch(e){}
+  }
+  function ping(o,n){
+    toast('Neue Bestellung von '+o.mc+(n>1?' und '+(n-1)+' weiteren':''));
+    document.title='('+newOrders+') Neue Bestellung – '+baseTitle;
+    beep();
+  }
+  function markSeen(){
+    if(!isOwner)return;
+    newOrders=0;
+    allOrders.forEach(function(o){if(o.t>lastSeen)lastSeen=o.t});
+    try{localStorage.setItem('bacon-express-seen',String(lastSeen))}catch(e){}
+    document.title=baseTitle;renderNav();
+  }
+  function renderOrders(){
+    var box=$('#opOrders');if(!box||!isOwner)return;
+    box.textContent='';
+    var h=document.createElement('h3');h.textContent='Bestellungen';box.appendChild(h);
+    if(!allOrders.length){var p=document.createElement('p');p.className='ship-note';p.textContent='Noch keine Bestellungen.';box.appendChild(p)}
+    allOrders.slice(0,25).forEach(function(o){
+      var r=document.createElement('div');r.className='adm-row';
+      var sp=document.createElement('span');
+      var items=(o.lines||[]).map(function(l){var p=byId[l[0]];return l[1]+'x '+(p?p.name+' '+p.lvl:'?')}).join(', ');
+      sp.textContent=o.no+' · Minecraft: '+String(o.mc||'?')+' · '+items+' · '+o.sum+' Diamanten · '+new Date(o.t).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});
+      r.appendChild(sp);box.appendChild(r);
+    });
+  }
+  async function opSave(){
+    var msg=$('#opMsg');
+    if(!isOP||!dbNs||!myId){if(msg)msg.textContent='Speichern nicht möglich: Du bist nicht als OP angemeldet.';return}
+    var jobs=[],bad=null;
+    P.forEach(function(p){
+      var pe=$('#opp-'+p.id),oe=$('#opo-'+p.id);if(!pe||!oe||bad)return;
+      var np=Math.round(+pe.value),no=oe.value===''?null:Math.round(+oe.value);
+      if(!(np>=1&&np<=99)){bad=p.name+': Der Preis muss zwischen 1 und 99 liegen.';return}
+      if(no!==null&&!(no>np&&no<=999)){bad=p.name+': Der Streichpreis muss höher als der Preis sein.';return}
+      if(np!==p.price||no!==(p.old||null))jobs.push({p:p,np:np,no:no});
+    });
+    if(bad){msg.textContent=bad;return}
+    if(!jobs.length){msg.textContent='Nichts geändert.';return}
+    msg.textContent='Speichere …';
+    var items={},t=Date.now();
+    priceDocs.forEach(function(d){if(d.id===myId)Object.keys(d.items).forEach(function(k){items[k]=d.items[k]})});
+    jobs.forEach(function(j){
+      items[j.p.id]=(j.np===j.p.p0&&j.no===j.p.o0)?{reset:true,t:t}:{price:j.np,old:j.no,t:t};
+    });
+    try{
+      await dbNs.doc('prices/'+myId).set({items:items});
+      msg.textContent=jobs.length+(jobs.length===1?' Preis gespeichert.':' Preise gespeichert.');
+    }catch(e){msg.textContent='Speichern nicht möglich. Dafür braucht dein Konto Mitwirken-Zugriff.'}
+  }
+  async function initShared(){
+    if(!(window.claude&&window.claude.use))return;
+    try{
+      userNs=await window.claude.use('user');
+      dbNs=await window.claude.use('db');
+      if(!dbNs)return;
+      if(userNs){myId=await userNs.id();isOwner=!!(await userNs.isOwner())}
+      dbNs.collection('ops').onSnapshot(function(snap){
+        opIds=[];opNames={};
+        snap.docs.forEach(function(d){
+          var v=d.data();
+          if(d.id==='list'&&v&&Array.isArray(v.ids)){
+            opIds=v.ids.filter(function(x){return typeof x==='string'});
+            if(v.names&&typeof v.names==='object')Object.keys(v.names).forEach(function(k){if(typeof v.names[k]==='string')opNames[k]=v.names[k].replace(/[^A-Za-z0-9_]/g,'').slice(0,16)});
+          }
+        });
+        updateRole();recompute();ensureOwner();renderOpAdmin();
+      },function(){});
+      dbNs.collection('prices').onSnapshot(function(snap){
+        priceDocs=snap.docs.map(function(d){var v=d.data()||{};return {id:d.id,items:(v.items&&typeof v.items==='object')?v.items:{}}});
+        recompute();
+      },function(){});
+      if(isOwner)dbNs.collection('opreq').onSnapshot(function(snap){
+        reqDocs=snap.docs.map(function(d){var v=d.data()||{};return {id:d.id,mc:typeof v.mc==='string'?v.mc.replace(/[^A-Za-z0-9_]/g,'').slice(0,16):''}});renderOpAdmin();
+      },function(){});
+      if(isOwner)dbNs.collection('orders').onSnapshot(function(snap){
+        var list=[],keys={};
+        snap.docs.forEach(function(d){var v=d.data();if(v&&Array.isArray(v.list))v.list.forEach(function(o){if(o&&o.no&&typeof o.t==='number'){list.push(o);keys[o.no]=1}})});
+        list.sort(function(a,b){return b.t-a.t});
+        if(seenKeys){
+          var fresh=list.filter(function(o){return !seenKeys[o.no]});
+          if(fresh.length){newOrders+=fresh.length;allOrders=list;seenKeys=keys;ping(fresh[0],fresh.length)}
+        }else{
+          newOrders=list.filter(function(o){return o.t>lastSeen}).length;
+          if(newOrders)document.title='('+newOrders+') Neue Bestellung – '+baseTitle;
+        }
+        seenKeys=keys;allOrders=list;renderNav();renderOrders();
+      },function(){});
+      updateRole();
+    }catch(e){}
+  }
+
+  /* Ein Minecraft-Tag dauert 20 echte Minuten */
+  function tick(){
+    var d=new Date(),left=20*60-((d.getMinutes()%20)*60+d.getSeconds());
+    var m=Math.floor(left/60),s=left%60;
+    $('#clock').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  renderStatic();renderNav();renderGrid();renderCart();tick();setInterval(tick,1000);initShared();
+})();
+</script>
+
+</body></html>
